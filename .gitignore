@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+models/checkpoints/
+models/best_model/
+models/anomaly_detector.pkl
+models/anomaly_scaler.pkl
+data/raw/
+*.egg-info/
+.DS_Store
+wandb/
+.env
+*.log
