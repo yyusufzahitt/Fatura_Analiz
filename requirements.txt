@@ -1,33 +1,27 @@
-# Temel ML stack
+# ── ML & Model ──────────────────────────────────────────────────────────
 torch>=2.0.0
 torchvision>=0.15.0
-transformers>=4.37.0
-datasets>=2.16.0
+transformers==4.41.2          # Florence-2 için sabit versiyon
 accelerate>=0.27.0
 
-# 8-bit optimizer (VRAM tasarrufu)
-bitsandbytes>=0.41.0
-
-# Anomali tespiti
+# ── Anomali Tespiti ──────────────────────────────────────────────────────
 scikit-learn>=1.3.0
 pandas>=2.0.0
 numpy>=1.24.0
-
-# Görsel işleme
-Pillow>=10.0.0
-pdf2image>=1.16.0
-opencv-python>=4.8.0
-
-# Görselleştirme ve açıklanabilirlik
-shap>=0.44.0
-matplotlib>=3.7.0
-seaborn>=0.12.0
-
-# Arayüz
-gradio>=4.20.0
-
-# Yardımcı
-tqdm>=4.65.0
-python-dotenv>=1.0.0
-sentencepiece>=0.1.99
 joblib>=1.3.0
+
+# ── Görsel & Belge İşleme ────────────────────────────────────────────────
+Pillow>=10.0.0
+pymupdf>=1.23.0               # PDF → görüntü (Poppler gerektirmez)
+lxml>=4.9.0                   # XML/XSLT işleme
+
+# ── Web API ──────────────────────────────────────────────────────────────
+fastapi>=0.110.0
+uvicorn>=0.29.0
+python-multipart>=0.0.9
+
+# ── Yardımcı ─────────────────────────────────────────────────────────────
+python-dotenv>=1.0.0
+requests>=2.31.0
+sentencepiece>=0.1.99
+tqdm>=4.65.0

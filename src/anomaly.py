@@ -69,6 +69,41 @@ class AnomalyDetector:
     def is_ready(self) -> bool:
         return self.model is not None and self.scaler is not None
 
+    def explain(self, invoice: dict) -> list[dict]:
+        """Her özelliğin anomaliye katkısını z-skoru ile döndürür.
+
+        Scaler'ın mean_ ve scale_ değerleri eğitim verisi dağılımını tutar.
+        z = (değer - ortalama) / std  →  kaç standart sapma uzakta?
+        """
+        if not self.is_ready():
+            return []
+
+        subtotal   = self._safe_float(invoice.get("subtotal", 0))
+        tax_amount = self._safe_float(invoice.get("tax_amount", 0))
+        total      = self._safe_float(invoice.get("total", 0))
+        tax_rate   = (tax_amount / subtotal) if subtotal > 0 else 0.0
+
+        vals  = [subtotal, tax_amount, total, tax_rate]
+        means = self.scaler.mean_.tolist()
+        stds  = self.scaler.scale_.tolist()
+
+        results = []
+        for feat, val, mean, std in zip(self.FEATURES, vals, means, stds):
+            if std < 1e-9:
+                continue
+            z = (val - mean) / std
+            results.append({
+                "feature":   feat,
+                "value":     round(val,  4),
+                "mean":      round(mean, 4),
+                "std":       round(std,  4),
+                "z_score":   round(z,    2),
+                "direction": "yüksek" if z > 0 else "düşük",
+            })
+
+        results.sort(key=lambda x: abs(x["z_score"]), reverse=True)
+        return results
+
     def score(self, invoice: dict) -> dict:
         """Tek fatura için anomali skoru ve karar döndürür.
 

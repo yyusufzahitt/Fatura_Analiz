@@ -1,14 +1,43 @@
-.venv/
+# Python
 __pycache__/
 *.pyc
 *.pyo
-models/checkpoints/
-models/best_model/
-models/anomaly_detector.pkl
-models/anomaly_scaler.pkl
-data/raw/
 *.egg-info/
 .DS_Store
-wandb/
+
+# Virtual environments
+.venv/
+.venv_qwen/
+venv/
+env/
+
+# Secrets
 .env
+
+# Runtime data
+data/invoices.db
+data/raw/
+
+# Model weights (too large for git — download/train separately)
+models/best_model/
+models/florence2_base/
+models/florence2_finetuned/
+models/checkpoints/
+models/checkpoints_r2/
+models/qwen_best/
+models/qwen_lora/
+models/*.pkl
+models/*.pt
+models/*.bin
+
+# Logs & temp
 *.log
+wandb/
+tmp_*.txt
+
+# Geliştirici notları (GitHub'a gitmesin)
+CLAUDE.md
+TODO.md
+
+# OS
+Thumbs.db

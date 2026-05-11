@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yenibulut Akıllı Fatura</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px;height:100%}
+body{font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;background:#F1F5F9;color:#0F172A;height:100%;display:flex;flex-direction:column;overflow:hidden}
+
+:root{
+  --p:#2563EB;--p-dk:#1D4ED8;--navy:#1E3A5F;--navy-dk:#0F2444;
+  --bg:#F1F5F9;--bg-alt:#F8FAFC;--surf:#FFF;
+  --bdr:#E2E8F0;--bdr-lt:#F1F5F9;
+  --txt:#0F172A;--txt2:#475569;--muted:#94A3B8;
+  --ok:#059669;--ok-bg:#D1FAE5;--ok-br:#6EE7B7;
+  --warn:#D97706;--warn-bg:#FEF3C7;--warn-br:#FCD34D;
+  --err:#DC2626;--err-bg:#FEE2E2;--err-br:#FCA5A5;
+  --info:#2563EB;--info-bg:#DBEAFE;--info-br:#93C5FD;
+  --sh-sm:0 1px 3px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.04);
+  --sh-md:0 4px 16px rgba(15,23,42,.09),0 2px 6px rgba(15,23,42,.05);
+  --r-sm:6px;--r-md:10px;--r-lg:16px;
+  --grad:linear-gradient(135deg,#2563EB 0%,#1E3A5F 100%);
+}
+
+/* ── Header ── */
+.header{display:flex;align-items:center;gap:18px;padding:0 28px;height:62px;background:linear-gradient(120deg,#0F2444 0%,#1E3A5F 55%,#1E40AF 100%);box-shadow:0 2px 20px rgba(15,23,42,.35);position:relative;overflow:hidden;flex-shrink:0}
+.header::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 75% 50%,rgba(96,165,250,.18) 0%,transparent 65%);pointer-events:none}
+.logo-box{width:36px;height:36px;border-radius:9px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0;z-index:1}
+.header-logo{height:38px;width:auto;display:block;z-index:1}
+.header-title{z-index:1}
+.header-title h1{font-size:17px;font-weight:800;color:#fff;letter-spacing:-.3px;line-height:1.2}
+.header-title h1 em{color:#93C5FD;font-style:normal}
+.header-tag{font-size:10px;color:rgba(255,255,255,.5);letter-spacing:.4px;margin-top:3px;display:flex;gap:6px;align-items:center}
+.header-tag span+span::before{content:'·';margin-right:6px;color:rgba(255,255,255,.25)}
+.header-right{margin-left:auto;display:flex;align-items:center;gap:10px;z-index:1}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#34D399;box-shadow:0 0 0 3px rgba(52,211,153,.25);animation:pulse 2.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(52,211,153,.25)}50%{box-shadow:0 0 0 7px rgba(52,211,153,.07)}}
+.badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:20px;padding:4px 14px;font-size:11px;color:#BFDBFE;font-weight:700;letter-spacing:.4px}
+
+/* ── Tabs ── */
+.tab-nav{display:flex;padding:0 24px;background:var(--surf);border-bottom:1px solid var(--bdr);box-shadow:var(--sh-sm);flex-shrink:0}
+.tab-btn{padding:13px 20px;font-size:13px;font-weight:600;color:var(--muted);border:none;background:none;border-bottom:2px solid transparent;cursor:pointer;transition:all .18s ease;display:flex;align-items:center;gap:7px;white-space:nowrap;font-family:inherit}
+.tab-btn:hover{color:var(--txt2);background:var(--bg-alt)}
+.tab-btn.active{color:var(--p);border-bottom-color:var(--p)}
+
+/* ── Panel ── */
+.tab-panel{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+.tab-panel.active{display:flex}
+
+/* ── Upload bar ── */
+.upload-bar{background:var(--surf);border-bottom:1px solid var(--bdr);padding:10px 24px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(15,23,42,.04);flex-shrink:0}
+.upload-zone{flex:1;display:flex;align-items:center;gap:10px;background:#F0F7FF;border:1.5px dashed var(--info-br);border-radius:var(--r-sm);padding:9px 16px;cursor:pointer;transition:all .2s ease;min-height:48px}
+.upload-zone:hover,.upload-zone.dragover{background:#DBEAFE;border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.upload-zone input{display:none}
+.upload-icon{font-size:16px;flex-shrink:0}
+.upload-text{font-size:12px;color:var(--p);font-weight:500;line-height:1.4}
+.upload-text small{color:var(--muted);font-weight:400}
+.clear-sq-btn{width:38px;height:38px;flex-shrink:0;border:1px solid var(--bdr);border-radius:var(--r-sm);background:var(--surf);color:var(--muted);font-size:18px;font-weight:400;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;line-height:1}
+.clear-sq-btn:hover{background:var(--err-bg);border-color:var(--err-br);color:var(--err)}
+
+/* ── Buttons ── */
+.btn-primary{display:inline-flex;align-items:center;gap:7px;background:var(--grad);border:none;border-radius:var(--r-sm);color:#fff;font-weight:700;font-size:13px;padding:10px 22px;cursor:pointer;box-shadow:0 2px 8px rgba(37,99,235,.3);transition:all .2s ease;white-space:nowrap;font-family:inherit}
+.btn-primary:hover{box-shadow:0 4px 16px rgba(37,99,235,.45);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-secondary{display:inline-flex;align-items:center;gap:6px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-sm);color:var(--txt2);font-weight:600;font-size:12px;padding:8px 16px;cursor:pointer;transition:all .18s ease;font-family:inherit}
+.btn-secondary:hover{background:var(--bg-alt);border-color:var(--p);color:var(--p)}
+.btn-danger{display:inline-flex;align-items:center;gap:6px;background:var(--err-bg);border:1px solid var(--err-br);border-radius:var(--r-sm);color:var(--err);font-weight:600;font-size:12px;padding:8px 16px;cursor:pointer;transition:all .18s ease;font-family:inherit}
+.btn-danger:hover{background:#FECACA}
+.btn-sm{padding:5px 12px !important;font-size:11px !important}
+
+/* ── Two-column layout ── */
+.content-row{display:flex;flex:1;overflow:hidden;min-height:0}
+.col-results{width:38%;min-width:280px;border-right:1px solid var(--bdr);overflow-y:auto;padding:16px 14px;background:var(--bg-alt)}
+.col-chat{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--surf)}
+
+/* ── Results toolbar ── */
+.results-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--bdr)}
+.results-toolbar .sec-title{margin:0;padding:0;border:none}
+
+/* ── Section title ── */
+.sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.1px;color:var(--txt2);display:flex;align-items:center;gap:8px}
+.sec-title::before{content:'';display:inline-block;width:3px;height:16px;background:var(--grad);border-radius:3px;flex-shrink:0}
+
+/* ── Invoice Cards ── */
+.invoice-card{background:var(--surf);border:1px solid var(--bdr);border-left:4px solid var(--p);border-radius:var(--r-md);padding:15px 15px 13px;margin-bottom:12px;box-shadow:var(--sh-sm);transition:box-shadow .2s ease,transform .2s ease;animation:fadeIn .3s ease;position:relative}
+.invoice-card:hover{box-shadow:var(--sh-md);transform:translateY(-1px)}
+.invoice-card.anomaly{border-left-color:var(--err)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+.card-top{display:flex;align-items:center;gap:7px;margin-bottom:12px;flex-wrap:wrap}
+.card-id{font-size:10px;font-weight:800;color:var(--p);font-family:'Cascadia Code','Fira Code',monospace;background:var(--info-bg);padding:3px 8px;border-radius:5px;flex-shrink:0;letter-spacing:.4px}
+.card-source{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.card-filename{font-size:11px;color:var(--muted);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.status-badge{font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;flex-shrink:0;letter-spacing:.3px}
+.badge-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+.badge-anomaly{background:var(--err-bg);color:var(--err);border:1px solid var(--err-br)}
+
+/* Close button */
+.card-close{background:var(--bg-alt);border:1px solid var(--bdr);border-radius:50%;width:22px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--muted);transition:all .15s ease;flex-shrink:0;line-height:1;padding:0}
+.card-close:hover{background:var(--err-bg);border-color:var(--err-br);color:var(--err)}
+
+/* Anomaly reasons box */
+.anomaly-reasons{background:var(--err-bg);border:1px solid var(--err-br);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px}
+.anomaly-reasons-title{font-size:10px;font-weight:700;color:var(--err);text-transform:uppercase;letter-spacing:.5px;margin-bottom:7px;display:flex;align-items:center;gap:5px}
+.anomaly-reason-item{font-size:11px;color:#7F1D1D;display:flex;align-items:flex-start;gap:6px;margin-top:4px;line-height:1.5}
+.anomaly-reason-item::before{content:'•';flex-shrink:0;font-weight:700;color:var(--err);margin-top:1px}
+
+/* Total highlight */
+.card-total{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1px solid var(--info-br);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:14px}
+.card-total.err{background:linear-gradient(135deg,#FFF7ED,#FEE2E2);border-color:var(--err-br)}
+.total-label{font-size:10px;font-weight:700;color:var(--p);text-transform:uppercase;letter-spacing:.5px}
+.total-label.err{color:var(--err)}
+.total-value{font-size:20px;font-weight:800;color:var(--navy);letter-spacing:-.5px}
+.total-value.err{color:#7F1D1D}
+
+/* Card sections */
+.card-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.card-section-label::after{content:'';flex:1;height:1px;background:var(--bdr)}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-bottom:4px}
+.field{display:flex;flex-direction:column;gap:2px}
+.field-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+.field-value{font-size:13px;font-weight:600;color:var(--txt);line-height:1.3;word-break:break-word}
+
+/* Rule flags */
+.rule-flags{border-top:1px solid var(--bdr);padding-top:10px;margin-top:12px;display:flex;flex-direction:column;gap:5px}
+.rule{font-size:11px;padding:6px 10px;border-radius:var(--r-sm);line-height:1.4;display:flex;align-items:flex-start;gap:6px}
+.rule-error{background:var(--err-bg);color:var(--err);border-left:3px solid var(--err)}
+.rule-warning{background:var(--warn-bg);color:var(--warn);border-left:3px solid var(--warn)}
+.rule-info{background:var(--info-bg);color:var(--info);border-left:3px solid var(--info)}
+.rule-ok{font-size:11px;color:var(--ok);font-weight:600;border-top:1px solid var(--bdr);padding-top:10px;margin-top:12px;display:flex;align-items:center;gap:6px}
+.card-error{background:var(--err-bg);border:1px solid var(--err-br);border-radius:var(--r-md);padding:14px;color:var(--err);font-size:12px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.empty-state{text-align:center;color:var(--muted);font-size:13px;padding:48px 16px;font-style:italic;line-height:1.6}
+
+/* ── Chat ── */
+.chat-inner{display:flex;flex-direction:column;height:100%;padding:16px 20px 14px}
+.chat-header{display:flex;align-items:center;gap:12px;padding-bottom:13px;border-bottom:1px solid var(--bdr);margin-bottom:13px;flex-shrink:0}
+.chat-avatar{width:38px;height:38px;border-radius:10px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 3px 12px rgba(37,99,235,.3);flex-shrink:0}
+.chat-header-text h3{font-size:14px;font-weight:700;color:var(--txt)}
+.chat-header-text p{font-size:11px;color:var(--muted);margin-top:2px}
+.chat-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 2px}
+.msg{display:flex;gap:10px;max-width:88%}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg-bubble{padding:10px 14px;border-radius:var(--r-md);font-size:13px;line-height:1.6}
+.msg.bot  .msg-bubble{background:var(--bg-alt);border:1px solid var(--bdr);color:var(--txt);border-radius:4px var(--r-md) var(--r-md) var(--r-md)}
+.msg.user .msg-bubble{background:var(--info-bg);border:1px solid var(--info-br);color:var(--txt);border-radius:var(--r-md) 4px var(--r-md) var(--r-md)}
+.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;align-self:flex-end}
+.msg.bot  .msg-avatar{background:var(--info-bg);border:1px solid var(--info-br)}
+.msg.user .msg-avatar{background:var(--navy);color:#fff;font-size:10px;font-weight:800}
+.chat-footer{flex-shrink:0;margin-top:12px}
+.chat-disclaimer{text-align:center;font-size:11px;color:var(--muted);padding:8px 0 6px;border-top:1px solid var(--bdr)}
+.chat-input-row{display:flex;gap:8px;margin-top:10px}
+.chat-input{flex:1;padding:10px 14px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);font-size:13px;color:var(--txt);background:var(--surf);outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.chat-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.chat-input::placeholder{color:var(--muted)}
+.typing{display:flex;gap:4px;padding:2px 0;align-items:center}
+.typing span{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:bounce .9s infinite}
+.typing span:nth-child(2){animation-delay:.15s}.typing span:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ── Faturalarım ── */
+.tab-content{padding:24px;flex:1;overflow-y:auto}
+.tab-header{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--bdr)}
+.tab-header h2{font-size:18px;font-weight:700;color:var(--txt)}
+.tab-header p{font-size:12px;color:var(--muted);margin-top:3px}
+.tab-actions{display:flex;gap:8px}
+
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-md);padding:14px 16px;box-shadow:var(--sh-sm)}
+.stat-card.s-blue{border-left:3px solid var(--p)}
+.stat-card.s-green{border-left:3px solid var(--ok)}
+.stat-card.s-yellow{border-left:3px solid var(--warn)}
+.stat-card.s-red{border-left:3px solid var(--err)}
+.stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:6px}
+.stat-value{font-size:22px;font-weight:800;color:var(--txt);letter-spacing:-.5px;line-height:1.2}
+.stat-value small{font-size:12px;font-weight:600;color:var(--muted)}
+
+.table-wrapper{background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-md);box-shadow:var(--sh-sm);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{background:var(--navy);color:#fff;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;padding:12px 14px;text-align:left;border:none;white-space:nowrap}
+tbody tr{transition:background .15s ease;cursor:pointer}
+tbody tr:nth-child(even) td{background:var(--bg-alt)}
+tbody tr:hover td{background:var(--info-bg)!important}
+tbody tr.selected td{background:#DBEAFE!important}
+tbody td{padding:9px 14px;font-size:12px;color:var(--txt);border-bottom:1px solid var(--bdr-lt);white-space:nowrap}
+tbody td:first-child{font-family:monospace;font-weight:700;color:var(--p)}
+tbody td.wrap{white-space:normal;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+.tbl-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px}
+.tbl-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-br)}
+.tbl-err{background:var(--err-bg);color:var(--err);border:1px solid var(--err-br)}
+.tbl-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--bdr);flex-wrap:wrap;gap:10px}
+.tbl-foot-info{font-size:12px;color:var(--muted)}
+.tbl-del-row{display:flex;align-items:center;gap:8px}
+.num-input{width:90px;padding:7px 10px;border:1.5px solid var(--bdr);border-radius:var(--r-sm);font-size:12px;color:var(--txt);background:var(--surf);outline:none;transition:border-color .2s,box-shadow .2s;font-family:inherit}
+.num-input:focus{border-color:var(--p);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.del-msg{font-size:12px;color:var(--ok);font-weight:600}
+.del-msg.err{color:var(--err)}
+
+/* ── Belge Görüntüle ── */
+.doc-panel{display:flex;flex-direction:column;flex:1;padding:24px;gap:16px;overflow:hidden}
+.doc-upload-row{display:flex;align-items:center;gap:12px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-md);padding:14px 18px;box-shadow:var(--sh-sm);flex-shrink:0}
+.doc-viewer{flex:1;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-md);box-shadow:var(--sh-sm);overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:0;position:relative}
+.doc-viewer-scroll{width:100%;height:100%;overflow-y:auto;padding:24px}
+.doc-viewer-placeholder{color:var(--muted);font-style:italic;font-size:13px;text-align:center}
+.doc-page{width:100%;max-width:900px;display:block;margin:0 auto 20px;border-radius:6px;box-shadow:var(--sh-md)}
+.doc-iframe{width:100%;height:100%;border:none;display:block}
+
+/* ── Loading overlay ── */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);display:flex;align-items:center;justify-content:center;z-index:1000;backdrop-filter:blur(3px)}
+.overlay.hidden{display:none}
+.overlay-box{background:var(--surf);border-radius:var(--r-lg);padding:32px 40px;text-align:center;box-shadow:var(--sh-md);min-width:240px}
+.spinner{width:36px;height:36px;border:3px solid var(--info-bg);border-top-color:var(--p);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.overlay-msg{font-size:14px;font-weight:600;color:var(--txt2)}
+.overlay-sub{font-size:12px;color:var(--muted);margin-top:6px}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surf);border:1px solid var(--bdr);border-radius:var(--r-md);padding:12px 18px;box-shadow:var(--sh-md);font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;z-index:1001;animation:slideUp .25s ease;max-width:360px;line-height:1.4}
+.toast.hidden{display:none}
+.toast.ok{border-left:4px solid var(--ok);color:var(--ok)}
+.toast.err{border-left:4px solid var(--err);color:var(--err)}
+.toast.info{border-left:4px solid var(--p);color:var(--p)}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg);border-radius:10px}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:10px}
+::-webkit-scrollbar-thumb:hover{background:#94A3B8}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="logo-box" id="logoBox">YB</div>
+  <div class="header-title">
+    <h1>Yenibulut <em>Akıllı Fatura</em></h1>
+    <div class="header-tag">
+      <span>Florence-2</span><span>Groq AI</span><span>UBL-TR e-Fatura</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-dot"></div>
+    <span class="badge">Beta</span>
+  </div>
+</header>
+
+<!-- ── TAB NAV ── -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="showTab('analiz',this)">📄 Analiz</button>
+  <button class="tab-btn" onclick="showTab('faturalar',this);loadInvoices()">📋 Faturalarım</button>
+  <button class="tab-btn" onclick="showTab('belge',this)">📑 Belge Görüntüle</button>
+</nav>
+
+<!-- ══ ANALİZ ══ -->
+<div class="tab-panel active" id="tab-analiz">
+  <div class="upload-bar">
+    <label class="upload-zone" id="dropZone" style="flex:1;">
+      <input type="file" id="fileInput" multiple accept="image/*,.pdf,.xml">
+      <span class="upload-icon">📎</span>
+      <div class="upload-text" id="uploadText">Fatura sürükleyin veya tıklayın<br><small>PNG · JPG · PDF · XML — çoklu dosya</small></div>
+    </label>
+    <button type="button" class="clear-sq-btn hidden" id="clearBtn" onclick="clearFileInput()" title="Seçimi temizle">×</button>
+    <button class="btn-primary" id="analyzeBtn" onclick="analyze()">⚡ Analiz Et</button>
+  </div>
+  <div class="content-row">
+    <div class="col-results">
+      <div class="results-toolbar">
+        <div class="sec-title">Çıkarım Sonuçları</div>
+        <button class="btn-secondary btn-sm" onclick="clearResults()">Tümünü Temizle</button>
+      </div>
+      <div id="cardsContainer">
+        <div class="empty-state">Fatura yükleyip<br>Analiz Et butonuna basın...</div>
+      </div>
+    </div>
+    <div class="col-chat">
+      <div class="chat-inner">
+        <div class="chat-header">
+          <div class="chat-avatar">🤖</div>
+          <div class="chat-header-text">
+            <h3>AI Asistan</h3>
+            <p>Faturalarınız hakkında Türkçe sorabilirsiniz</p>
+          </div>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg bot">
+            <div class="msg-avatar">🤖</div>
+            <div class="msg-bubble">Merhaba! Fatura yükleyip analiz ettikten sonra sorularınızı yanıtlayabilirim.<br><br>Örnek: <em>"Son faturanın tutarı ne kadar?"</em> veya <em>"Teknoloji A.Ş. faturalarını özetle."</em></div>
+          </div>
+        </div>
+        <div class="chat-footer">
+          <div class="chat-disclaimer">Yalnızca yüklü faturalar hakkında yanıt verilir</div>
+          <div class="chat-input-row">
+            <input class="chat-input" id="chatInput" type="text" placeholder="Faturalarınız hakkında soru sorun...">
+            <button class="btn-primary" onclick="sendChat()" style="padding:10px 18px;">Gönder</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FATURALARIM ══ -->
+<div class="tab-panel" id="tab-faturalar">
+  <div class="tab-content">
+    <div class="tab-header">
+      <div><h2>Fatura Geçmişi</h2><p>Sisteme yüklenen tüm faturalar</p></div>
+      <div class="tab-actions">
+        <button class="btn-secondary" onclick="loadInvoices()">↻ Yenile</button>
+        <button class="btn-danger" onclick="deleteSelected()">Seçili Kaydı Sil</button>
+      </div>
+    </div>
+    <div class="stats-bar">
+      <div class="stat-card s-blue"><div class="stat-label">Toplam Fatura</div><div class="stat-value" id="s-count">—</div></div>
+      <div class="stat-card s-green"><div class="stat-label">Toplam Tutar</div><div class="stat-value" id="s-amount">—</div></div>
+      <div class="stat-card s-yellow"><div class="stat-label">Toplam KDV</div><div class="stat-value" id="s-tax">—</div></div>
+      <div class="stat-card s-red"><div class="stat-label">Anomali</div><div class="stat-value" id="s-anomaly">—</div></div>
+    </div>
+    <div class="table-wrapper">
+      <table>
+        <thead><tr><th>ID</th><th>Dosya</th><th>Firma</th><th>Tarih</th><th>Tutar (₺)</th><th>Anomali</th><th>Eklenme</th></tr></thead>
+        <tbody id="invoiceTableBody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">Yükleniyor...</td></tr></tbody>
+      </table>
+      <div class="tbl-foot">
+        <span class="tbl-foot-info" id="tblCount">0 fatura</span>
+        <div class="tbl-del-row">
+          <input class="num-input" type="number" id="delIdInput" placeholder="ID">
+          <button class="btn-danger btn-sm" onclick="deleteById()">Sil</button>
+          <span class="del-msg" id="delMsg"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ BELGE GÖRÜNTÜLE ══ -->
+<div class="tab-panel" id="tab-belge">
+  <div class="doc-panel">
+    <div class="tab-header" style="padding-bottom:14px;margin-bottom:0;flex-shrink:0">
+      <div><h2>Belge Görüntüleyici</h2><p>PDF — orijinal sayfa render · XML — GİB XSLT ile resmi e-fatura görünümü</p></div>
+    </div>
+    <div class="doc-upload-row">
+      <label class="upload-zone" id="docDropZone" style="flex:1;max-width:480px;">
+        <input type="file" id="docInput" accept=".pdf,.xml">
+        <span class="upload-icon">📄</span>
+        <div class="upload-text" id="docUploadText">PDF veya XML yükleyin<br><small>Orijinal belge görünümü için</small></div>
+      </label>
+      <button type="button" class="clear-sq-btn hidden" id="docClearBtn" onclick="clearDocInput()" title="Seçimi temizle">×</button>
+      <button class="btn-primary" onclick="renderDocument()">🔍 Görüntüle</button>
+    </div>
+    <div class="doc-viewer" id="docViewer">
+      <div class="doc-viewer-placeholder">PDF veya XML dosyası seçip Görüntüle butonuna basın...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loading overlay ── -->
+<div class="overlay hidden" id="overlay">
+  <div class="overlay-box">
+    <div class="spinner"></div>
+    <div class="overlay-msg" id="overlayMsg">İşleniyor...</div>
+    <div class="overlay-sub" id="overlaySub">Lütfen bekleyin</div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast hidden" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────
+let chatHistory = [];
+let selectedInvId = null;
+let toastTimer = null;
+
+// ── Init ──────────────────────────────────────────────────────────────────
+(function init() {
+  document.getElementById('fileInput').addEventListener('change', function() {
+    const hasFiles = this.files.length > 0;
+    document.getElementById('clearBtn').classList.toggle('hidden', !hasFiles);
+    const txt = hasFiles
+      ? (this.files.length > 1 ? `${this.files.length} dosya seçildi` : this.files[0].name)
+      : 'Fatura sürükleyin veya tıklayın';
+    document.getElementById('uploadText').innerHTML = hasFiles
+      ? `<strong style="color:var(--txt)">${txt}</strong>`
+      : `${txt}<br><small>PNG · JPG · PDF · XML — çoklu dosya</small>`;
+  });
+  document.getElementById('docInput').addEventListener('change', function() {
+    const hasFiles = this.files.length > 0;
+    document.getElementById('docClearBtn').classList.toggle('hidden', !hasFiles);
+    document.getElementById('docUploadText').innerHTML = hasFiles
+      ? `<strong style="color:var(--txt)">${this.files[0].name}</strong>`
+      : `PDF veya XML yükleyin<br><small>Orijinal belge görünümü için</small>`;
+  });
+  setupDragDrop('dropZone',    'fileInput');
+  setupDragDrop('docDropZone', 'docInput');
+  document.getElementById('chatInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+  });
+  // Logo
+  fetch('/static/logo.png', {method:'HEAD'}).then(r => {
+    if (!r.ok) return;
+    const img = document.createElement('img');
+    img.src = '/static/logo.png'; img.className = 'header-logo'; img.alt = 'YB';
+    document.getElementById('logoBox').replaceWith(img);
+  }).catch(()=>{});
+})();
+
+function setupDragDrop(zoneId, inputId) {
+  const zone  = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+      const dt = new DataTransfer();
+      for (const f of e.dataTransfer.files) dt.items.add(f);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
+function clearFileInput() {
+  document.getElementById('fileInput').value = '';
+  document.getElementById('clearBtn').classList.add('hidden');
+  document.getElementById('uploadText').innerHTML =
+    'Fatura sürükleyin veya tıklayın<br><small>PNG · JPG · PDF · XML — çoklu dosya</small>';
+}
+
+function clearDocInput() {
+  document.getElementById('docInput').value = '';
+  document.getElementById('docClearBtn').classList.add('hidden');
+  document.getElementById('docUploadText').innerHTML =
+    'PDF veya XML yükleyin<br><small>Orijinal belge görünümü için</small>';
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+function showTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── Loading overlay ───────────────────────────────────────────────────────
+function showLoading(msg, sub) {
+  document.getElementById('overlayMsg').textContent = msg || 'İşleniyor...';
+  document.getElementById('overlaySub').textContent = sub || 'Lütfen bekleyin';
+  document.getElementById('overlay').classList.remove('hidden');
+}
+function hideLoading() { document.getElementById('overlay').classList.add('hidden'); }
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type}`;
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('hidden'), 3800);
+}
+
+// ── Card close / clear ────────────────────────────────────────────────────
+function removeCard(invId) {
+  document.getElementById('card-' + invId)?.remove();
+  if (!document.querySelectorAll('#cardsContainer .invoice-card, #cardsContainer .card-error').length) {
+    document.getElementById('cardsContainer').innerHTML =
+      '<div class="empty-state">Fatura yükleyip<br>Analiz Et butonuna basın...</div>';
+  }
+}
+
+function clearResults() {
+  document.getElementById('cardsContainer').innerHTML =
+    '<div class="empty-state">Fatura yükleyip<br>Analiz Et butonuna basın...</div>';
+}
+
+// ── Card renderer ─────────────────────────────────────────────────────────
+function renderCard(result) {
+  if (result.error) {
+    return `<div class="card-error" id="card-err-${Date.now()}">
+      <span><strong>${esc(result.filename)}</strong><br><span style="font-weight:400">${esc(result.error)}</span></span>
+      <button class="card-close" onclick="this.closest('.card-error').remove()" title="Kapat">×</button>
+    </div>`;
+  }
+
+  const { inv_id, filename, invoice: inv, anomaly, flags } = result;
+  const source  = inv._source || 'image';
+  const isAnom  = anomaly.is_anomaly;
+  const score   = anomaly.score.toFixed(2);
+  const reasons = anomaly.reasons || [];
+
+  const srcStyle = {
+    xml:   'background:rgba(5,150,105,.1);color:#059669',
+    pdf:   'background:rgba(37,99,235,.1);color:#2563EB',
+    image: 'background:rgba(124,58,237,.1);color:#7C3AED',
+  }[source] || 'background:rgba(124,58,237,.1);color:#7C3AED';
+
+  // Total
+  const total = parseFloat(inv.total || 0);
+  const totalHtml = total > 0 ? `
+    <div class="card-total${isAnom?' err':''}">
+      <span class="total-label${isAnom?' err':''}">Toplam Tutar</span>
+      <span class="total-value${isAnom?' err':''}">₺ ${fmt(total)}</span>
+    </div>` : '';
+
+  // Anomaly reasons box
+  const reasonsHtml = (isAnom && reasons.length) ? `
+    <div class="anomaly-reasons">
+      <div class="anomaly-reasons-title">⚠ Anomali Nedenleri</div>
+      ${reasons.map(r => `<div class="anomaly-reason-item">${esc(r)}</div>`).join('')}
+    </div>` : '';
+
+  function fld(key, label) {
+    const v = inv[key]; if (!v || String(v).startsWith('_')) return '';
+    return `<div class="field"><span class="field-label">${label}</span><span class="field-value">${esc(String(v))}</span></div>`;
+  }
+  function section(fields, title='') {
+    if (!fields.trim()) return '';
+    return (title ? `<div class="card-section-label">${title}</div>` : '')
+         + `<div class="field-grid">${fields}</div>`;
+  }
+
+  const mainF  = [fld('vendor_name','Satıcı'),fld('buyer_name','Alıcı'),fld('invoice_date','Tarih'),fld('invoice_number','Fatura No'),fld('invoice_type','Tür'),fld('reference_number','Referans')].join('');
+  const partyF = [fld('vendor_vkn','Satıcı VKN'),fld('buyer_vkn','Alıcı VKN'),fld('vendor_address','Satıcı Adres')].join('');
+  const amtF   = [fld('subtotal','Ara Toplam'),fld('discount_amount','İskonto'),fld('tax_rate','KDV Oranı'),fld('tax_amount','KDV Tutarı')].join('');
+  const extF   = [fld('due_date','Vade Tarihi'),fld('payment_method','Ödeme'),fld('currency','Para Birimi')].join('');
+
+  const iconMap = { error:'✕', warning:'!', info:'i' };
+  const flagsHtml = flags.length === 0
+    ? '<div class="rule-ok"><span>✓</span> Tüm kural kontrolleri geçti</div>'
+    : `<div class="rule-flags">${flags.map(f =>
+        `<div class="rule rule-${f.severity}">
+           <span style="flex-shrink:0;font-weight:700;">${iconMap[f.severity]||'i'}</span>
+           <span>${esc(f.message)}</span>
+         </div>`).join('')}</div>`;
+
+  const lineItems = inv.line_items || [];
+  let itemsHtml = '';
+  if (lineItems.length > 0) {
+    const rows = lineItems.slice(0,5).map(li =>
+      `<div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#475569;padding:5px 0;border-bottom:1px solid #F1F5F9;">
+        <span style="flex:1;margin-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(String(li.description||'').slice(0,40))}</span>
+        <span style="font-weight:600;color:#0F172A;white-space:nowrap;flex-shrink:0;">${esc(String(li.qty||''))} × ${esc(String(li.amount||''))}</span>
+      </div>`).join('');
+    const more = lineItems.length > 5 ? `<div style="font-size:10px;color:#94A3B8;margin-top:6px;font-style:italic;">+${lineItems.length-5} kalem daha...</div>` : '';
+    itemsHtml = `<div class="card-section-label">Kalemler</div>
+      <div style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:6px;padding:8px 12px;">${rows}${more}</div>`;
+  }
+
+  return `<div class="invoice-card${isAnom?' anomaly':''}" id="card-${inv_id}">
+    <div class="card-top">
+      <span class="card-id">#${inv_id}</span>
+      <span class="card-source" style="${srcStyle}">${source}</span>
+      <span class="card-filename" title="${esc(filename)}">${esc(filename)}</span>
+      <span class="status-badge ${isAnom?'badge-anomaly':'badge-ok'}">${isAnom?`⚠ ANOMALİ (${score})`:'✓ Normal'}</span>
+      <button class="card-close" onclick="removeCard(${inv_id})" title="Kapat">×</button>
+    </div>
+    ${reasonsHtml}
+    ${totalHtml}
+    ${section(mainF)}
+    ${partyF.trim() ? section(partyF,'Taraf Bilgileri') : ''}
+    ${amtF.trim()   ? section(amtF,'Tutarlar') : ''}
+    ${extF.trim()   ? section(extF,'Ödeme Bilgileri') : ''}
+    ${itemsHtml}
+    ${flagsHtml}
+  </div>`;
+}
+
+// ── Analyze (SSE) ─────────────────────────────────────────────────────────
+async function analyze() {
+  const fi = document.getElementById('fileInput');
+  if (!fi.files.length) { showToast('Önce dosya seçin.', 'err'); return; }
+
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = '';
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+
+  // Inline progress element
+  const prog = document.createElement('div');
+  prog.className = 'empty-state';
+  prog.innerHTML = '<div class="spinner" style="width:28px;height:28px;margin:0 auto 12px"></div>Analiz başlatılıyor...';
+  container.appendChild(prog);
+
+  const totalFiles = fi.files.length;
+  let done = 0;
+  const formData = new FormData();
+  for (const f of fi.files) formData.append('files', f);
+
+  let buffer = '';
+  try {
+    const response = await fetch('/api/analyze', { method: 'POST', body: formData });
+    const reader   = response.body.getReader();
+    const decoder  = new TextDecoder();
+
+    while (true) {
+      const { done: streamDone, value } = await reader.read();
+      if (streamDone) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const raw = line.slice(6).trim();
+        if (raw === '[DONE]') { prog.remove(); break; }
+        try {
+          const result = JSON.parse(raw);
+          done++;
+          const p = document.getElementById('analyzeProgress') || prog;
+          p.id = 'analyzeProgress';
+          p.innerHTML = `<div class="spinner" style="width:24px;height:24px;margin:0 auto 10px"></div>${done}/${totalFiles} dosya işlendi...`;
+          const div = document.createElement('div');
+          div.innerHTML = renderCard(result);
+          container.insertBefore(div.firstElementChild, document.getElementById('analyzeProgress'));
+        } catch(e) { console.error('parse err', e); }
+      }
+    }
+  } catch(e) {
+    container.innerHTML = `<div class="card-error"><span>Bağlantı hatası: ${esc(String(e))}</span></div>`;
+  } finally {
+    btn.disabled = false;
+    document.getElementById('analyzeProgress')?.remove();
+    if (done > 0) {
+      showToast(`${done} fatura analiz edildi`, 'ok');
+      clearFileInput(); // upload alanını sıfırla
+    }
+  }
+}
+
+// ── Chat ─────────────────────────────────────────────────────────────────
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  appendMsg('user', msg);
+
+  // Typing indicator
+  const tid = 'typing_' + Date.now();
+  const tel = document.createElement('div');
+  tel.className = 'msg bot'; tel.id = tid;
+  tel.innerHTML = '<div class="msg-avatar">🤖</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>';
+  const cm = document.getElementById('chatMessages');
+  cm.appendChild(tel); cm.scrollTop = cm.scrollHeight;
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ message: msg, history: chatHistory }),
+    });
+    const data = await r.json();
+    document.getElementById(tid)?.remove();
+    appendMsg('bot', data.reply);
+    chatHistory.push({role:'user',content:msg});
+    chatHistory.push({role:'assistant',content:data.reply});
+  } catch(e) {
+    document.getElementById(tid)?.remove();
+    appendMsg('bot', 'Bağlantı hatası: ' + e.message);
+  }
+}
+
+function appendMsg(role, content) {
+  const cm = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  div.innerHTML = `<div class="msg-avatar">${role==='bot'?'🤖':'YU'}</div>
+    <div class="msg-bubble">${esc(content).replace(/\n/g,'<br>')}</div>`;
+  cm.appendChild(div); cm.scrollTop = cm.scrollHeight;
+}
+
+// ── Invoices ─────────────────────────────────────────────────────────────
+async function loadInvoices() {
+  try {
+    const r    = await fetch('/api/invoices');
+    const data = await r.json();
+    renderStats(data.stats);
+    renderTable(data.invoices);
+  } catch(e) { showToast('Faturalar yüklenemedi', 'err'); }
+}
+
+function renderStats(s) {
+  document.getElementById('s-count').innerHTML  = `${s.count} <small>adet</small>`;
+  document.getElementById('s-amount').innerHTML = `₺ ${fmtK(s.total_amount)}`;
+  document.getElementById('s-tax').innerHTML    = `₺ ${fmtK(s.total_tax)}`;
+  document.getElementById('s-anomaly').innerHTML= `${s.anomaly_count} <small>fatura</small>`;
+}
+
+function renderTable(invoices) {
+  const tbody = document.getElementById('invoiceTableBody');
+  document.getElementById('tblCount').textContent = `${invoices.length} fatura`;
+  if (!invoices.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">Henüz fatura yüklenmedi.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = invoices.map(inv => {
+    const isAnom = inv.is_anomaly;
+    return `<tr onclick="selectRow(this,${inv.id})">
+      <td>#${inv.id}</td>
+      <td class="wrap">${esc(inv.filename||'')}</td>
+      <td class="wrap">${esc(inv.vendor_name||'')}</td>
+      <td>${esc(inv.invoice_date||'')}</td>
+      <td>${fmt(parseFloat(inv.total||0))}</td>
+      <td><span class="tbl-badge ${isAnom?'tbl-err':'tbl-ok'}">${isAnom?'Evet':'Hayır'}</span></td>
+      <td>${fmtDate(inv.extracted_at)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function selectRow(tr, id) {
+  document.querySelectorAll('#invoiceTableBody tr').forEach(r => r.classList.remove('selected'));
+  tr.classList.add('selected');
+  selectedInvId = id;
+}
+
+async function deleteSelected() {
+  if (!selectedInvId) { showToast('Önce tablodan bir satır seçin.', 'err'); return; }
+  await doDelete(selectedInvId);
+  selectedInvId = null;
+}
+
+async function deleteById() {
+  const id = parseInt(document.getElementById('delIdInput').value);
+  if (!id) { showToast('Geçerli bir ID girin.', 'err'); return; }
+  await doDelete(id);
+  document.getElementById('delIdInput').value = '';
+}
+
+async function doDelete(id) {
+  try {
+    const r = await fetch(`/api/invoices/${id}`, {method:'DELETE'});
+    if (r.ok) {
+      const msg = document.getElementById('delMsg');
+      msg.textContent = `#${id} silindi`; msg.className = 'del-msg';
+      setTimeout(() => { msg.textContent = ''; }, 3000);
+      loadInvoices();
+    } else {
+      const d = await r.json();
+      showToast('Hata: ' + d.detail, 'err');
+    }
+  } catch(e) { showToast('Bağlantı hatası', 'err'); }
+}
+
+// ── Document viewer ───────────────────────────────────────────────────────
+async function renderDocument() {
+  const di = document.getElementById('docInput');
+  if (!di.files.length) { showToast('Önce bir dosya seçin.', 'err'); return; }
+  showLoading('Belge render ediliyor...', 'Lütfen bekleyin');
+  const formData = new FormData();
+  formData.append('file', di.files[0]);
+  try {
+    const r = await fetch('/api/render', {method:'POST', body:formData});
+    if (!r.ok) { const d = await r.json(); throw new Error(d.detail || 'Hata'); }
+    const data  = await r.json();
+    const viewer = document.getElementById('docViewer');
+
+    if (data.type === 'pdf') {
+      viewer.innerHTML = `<div class="doc-viewer-scroll">
+        ${data.pages.map(p => `<img class="doc-page" src="data:image/png;base64,${p}" alt="Sayfa">`).join('')}
+      </div>`;
+    } else {
+      // XML: iframe ile CSS izolasyonu sağla
+      viewer.innerHTML = '';
+      const iframe = document.createElement('iframe');
+      iframe.className = 'doc-iframe';
+      viewer.appendChild(iframe);
+      // srcdoc yerine blob URL — daha geniş tarayıcı desteği
+      const blob = new Blob([data.html], {type:'text/html;charset=utf-8'});
+      iframe.src = URL.createObjectURL(blob);
+    }
+  } catch(e) { showToast('Render hatası: ' + e.message, 'err'); }
+  finally { hideLoading(); }
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmt(n) {
+  return isNaN(n) ? '—' : n.toLocaleString('tr-TR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function fmtK(n) {
+  if (isNaN(n) || n === null) return '—';
+  if (n >= 1_000_000) return (n/1_000_000).toLocaleString('tr-TR',{maximumFractionDigits:1}) + ' M';
+  if (n >= 1_000)     return (n/1_000).toLocaleString('tr-TR',{maximumFractionDigits:1}) + ' B';
+  return fmt(n);
+}
+
+function fmtDate(str) {
+  if (!str) return '—';
+  try {
+    // SQLite datetime('now') UTC formatı: "2024-03-15 14:22:00"
+    // 'T' ve 'Z' ekleyerek UTC olarak parse et, yerel saate çevir
+    const d = new Date(str.replace(' ', 'T') + 'Z');
+    return d.toLocaleString('tr-TR', {
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit'
+    });
+  } catch(e) { return str.slice(0,16); }
+}
+</script>
+</body>
+</html>
